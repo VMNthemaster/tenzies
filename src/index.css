@@ -5,3 +5,11 @@
 body {
   background-color: rgb(40, 40, 40);
 }
+
+.animation {
+  animation: mymove 5s forwards;
+}
+
+@keyframes mymove {
+  100% {font-size: 3vw;}
+}

@@ -1,7 +1,8 @@
-import React, { useState,useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Die from "./components/Die";
 import { nanoid } from 'nanoid'
 import Confetti from 'react-confetti'
+import LeaderboardModal from './components/LeaderboardModal';
 
 function App() {
 
@@ -24,6 +25,8 @@ function App() {
   const [timeTaken, setTimeTaken] = useState(0)
 
   const [tenzies, setTenzies] = useState(false)
+
+  // const [finalupdatedLocalStorageArray, finalSetUpdatedLocalStorageArray] = useState([])
 
 
   useEffect(() => {
@@ -81,27 +84,54 @@ function App() {
 
     if(allHeld && sameValues){
       setTenzies(true)
-      console.log("you won")
     }
   
   }, [dice])
 
   
-    useEffect(() => {
-      setTimeTaken((prevValue) => {
-        return {
-          ...prevValue,
-          endTime:( new Date() * 1) - prevValue.startTime
-        }
-      })     
-    }, [tenzies]) 
+  useEffect(() => {
+    setTimeTaken((prevValue) => {
+      return {
+        ...prevValue,
+        endTime:( new Date() * 1) - prevValue.startTime
+      }
+    })     
+  }, [tenzies]) 
+  
+  // let localStorageArray
+
+  useEffect(() => {     // this is just to create a local storage for our variable.
+    let localStorageArray = [{
+      timeTaken: -1,
+      rollsRequired: -1
+    }]
+    window.localStorage.setItem('user',JSON.stringify(localStorageArray))
+  }, [])
+
+  let updatedLocalStorageArray = []
+
+  useEffect(() => {
+    updatedLocalStorageArray = JSON.parse(window.localStorage.getItem('user'));
+    const endTime = new Date() * 1
+    const newLocalStorageItem = {
+      timeTaken: (endTime - timeTaken.startTime)/1000,
+      rollsRequired: rollsRequired
+    }
+    updatedLocalStorageArray.push(newLocalStorageItem)
+    // console.log(typeof updatedLocalStorageArray)
+    window.localStorage.setItem('user',JSON.stringify(updatedLocalStorageArray))
+
+
+  }, [tenzies])
+  
+    
   
 
   return (
     <>
       <main className="">
         <div className="h-[90vh] md:mx-[20%] my-[5vh] bg-gray-100  rounded-lg flex flex-col justify-around">
-          {tenzies && <Confetti />}
+          {/* {tenzies && <Confetti />} */}
           <h1 className="text-center text-[10vw] md:text-[5vw] text-red-600 italic">Tenzies</h1>
 
           <div className='w-[50%] items-center mx-auto bg-violet-500 rounded-md  shadow-md'>
@@ -117,6 +147,9 @@ function App() {
 
 
           <button onClick={rollDice} className='w-[20%] h-[7%] border-2 mx-auto text-[5vw] md:text-[2vw] font-[gabriola] bg-blue-600 text-white rounded-md hover:bg-blue-500'>{tenzies ? "New Game" : "ROLL"}</button>
+        </div>
+        <div className='md:mx-[20%] mb-[5vh] rounded-lg'>
+          {tenzies && <LeaderboardModal timeTaken = {timeTaken.endTime/1000} rollsRequired = {rollsRequired} />}
         </div>
       </main>
     </>

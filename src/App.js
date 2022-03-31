@@ -26,28 +26,30 @@ function App() {
 
   const [tenzies, setTenzies] = useState(false)
 
-  // const [finalupdatedLocalStorageArray, finalSetUpdatedLocalStorageArray] = useState([])
+
 
 
   useEffect(() => {
+
     setTimeTaken({
       startTime: new Date() * 1,
     })
   }, [])
-  
+
 
 
   const rollDice = () => {
     setRollsRequired((prevValue) => prevValue + 1)
 
-    if(!tenzies){
+    if (!tenzies) {
       setDice((oldDice) => {
         return oldDice.map((item) => {
           return item.isHeld ? item : { ...item, value: Math.ceil(Math.random() * 6) }
         })
       })
     }
-    else{
+    else {
+      // this will run after we will click on new game
       setRollsRequired(0)
       setTenzies(false)
       setDice(allNewDice())
@@ -82,62 +84,86 @@ function App() {
       return item.value === firstValue
     })
 
-    if(allHeld && sameValues){
-      setTenzies(true)
+    if (allHeld && sameValues) {
+      // console.log(allHeld,sameValues)
+      setTenzies((prevValue) => !prevValue)
+
     }
-  
+
   }, [dice])
 
-  
+
   useEffect(() => {
-    setTimeTaken((prevValue) => {
-      return {
-        ...prevValue,
-        endTime:( new Date() * 1) - prevValue.startTime
+    
+
+    let localStorageItems = []
+
+    if (localStorage.getItem("user") === null) {
+      // if local storage key "user" is empty, add a fake item
+      const fakeValue = {
+        timeTaken: 1000,
+        rollsRequired: 1000
       }
-    })     
-  }, [tenzies]) 
-  
-  // let localStorageArray
+      // console.log(fakeValue)
+      localStorageItems.push(fakeValue)
+      window.localStorage.setItem('user', JSON.stringify(localStorageItems))
+      // console.log("first if")
 
-  useEffect(() => {     // this is just to create a local storage for our variable.
-    let localStorageArray = [{
-      timeTaken: -1,
-      rollsRequired: -1
-    }]
-    window.localStorage.setItem('user',JSON.stringify(localStorageArray))
-  }, [])
-
-  let updatedLocalStorageArray = []
-
-  useEffect(() => {
-    updatedLocalStorageArray = JSON.parse(window.localStorage.getItem('user'));
-    const endTime = new Date() * 1
-    const newLocalStorageItem = {
-      timeTaken: (endTime - timeTaken.startTime)/1000,
-      rollsRequired: rollsRequired
     }
-    updatedLocalStorageArray.push(newLocalStorageItem)
-    // console.log(typeof updatedLocalStorageArray)
-    window.localStorage.setItem('user',JSON.stringify(updatedLocalStorageArray))
+    else {
+      // this means local storage is not empty so we will first receive all values form it then add our new value
+      const localStorageArray = JSON.parse(window.localStorage.getItem('user'))
+      // console.log(localStorageArray)
 
+      // this is done since the values in local storage are getting in wrong way
+      localStorageItems = localStorageArray.map((item) => {
+        return item
+      })
+      // console.log(localStorageItems)
+
+      if (tenzies === true) {
+        // if we win game, then only add the new values to the local storage
+        const endTime = ((new Date() * 1) - timeTaken.startTime) / 1000
+        const newValue = {
+          rollsRequired: rollsRequired,
+          timeTaken: endTime
+        }
+        // console.log("hi")
+        // console.log(newValue)
+        // console.log(localStorageItems)
+        localStorageItems.push(newValue)
+        window.localStorage.setItem('user', JSON.stringify(localStorageItems))
+  
+  
+        setTimeTaken((prevValue) => {
+          return {
+            ...prevValue,
+            endTime: ((new Date() * 1) - prevValue.startTime)/1000
+          }
+        })
+  
+      }
+
+    }
 
   }, [tenzies])
-  
-    
-  
+
+
+
+
+
 
   return (
     <>
       <main className="">
         <div className="h-[90vh] md:mx-[20%] my-[5vh] bg-gray-100  rounded-lg flex flex-col justify-around">
-          {/* {tenzies && <Confetti />} */}
+          {tenzies && <Confetti />}
           <h1 className="text-center text-[10vw] md:text-[5vw] text-red-600 italic">Tenzies</h1>
 
           <div className='w-[50%] items-center mx-auto bg-violet-500 rounded-md  shadow-md'>
-          {tenzies && <h1 className='text-center font-[gabriola] text-[5vw] md:text-[2vw] z-10 h-[10vh] text-yellow-200 animation'>Congratulations!!!</h1>}
-          {tenzies && <h1 className='text-center text-white font-[ronnia] animation2 text-[2vw] z-10'>Rolls Required: {rollsRequired}</h1>}
-          {tenzies && <h1 className='text-center text-white font-[ronnia] animation2 text-[2vw] z-10'>Time Taken : {timeTaken.endTime/1000} sec</h1>}
+            {tenzies && <h1 className='text-center font-[gabriola] text-[5vw] md:text-[2vw] z-10 h-[10vh] text-yellow-200 animation'>Congratulations!!!</h1>}
+            {tenzies && <h1 className='text-center text-white font-[ronnia] animation2 text-[2vw] z-10'>Rolls Required: {rollsRequired}</h1>}
+            {tenzies && <h1 className='text-center text-white font-[ronnia] animation2 text-[2vw] z-10'>Time Taken : {timeTaken.endTime} sec</h1>}
           </div>
 
           <p className="text-center text-[5vw] md:text-[2vw] p-1">Roll until all dice are the same. Click each die to freeze it at its current value between rolls.</p>
@@ -149,7 +175,7 @@ function App() {
           <button onClick={rollDice} className='w-[20%] h-[7%] border-2 mx-auto text-[5vw] md:text-[2vw] font-[gabriola] bg-blue-600 text-white rounded-md hover:bg-blue-500'>{tenzies ? "New Game" : "ROLL"}</button>
         </div>
         <div className='md:mx-[20%] mb-[5vh] rounded-lg'>
-          {tenzies && <LeaderboardModal timeTaken = {timeTaken.endTime/1000} rollsRequired = {rollsRequired} />}
+          {tenzies && <LeaderboardModal timeTaken={timeTaken.endTime} rollsRequired={rollsRequired} tenzies = {tenzies} />}
         </div>
       </main>
     </>
